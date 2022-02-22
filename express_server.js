@@ -19,12 +19,10 @@ const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
 
+
+
 app.get("/", (req, res) => {
   res.redirect(`../urls`);
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
 });
 
 // GET:BROWSE - SHOW ALL URLS

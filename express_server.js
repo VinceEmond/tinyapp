@@ -57,14 +57,28 @@ app.get("/hello", (req, res) => {
   res.render("hello_world", templateVars);
 });
 
+app.get("/404", (req,res)=> {
+  res.render("404");
+});
+
 app.get("/urls/:shortURL", (req,res) => {
+
+  if (!(urlDatabase[req.params.shortURL])) {
+    res.redirect(`../404`);
+  }
+  
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req,res) => {
+
+  if (!(urlDatabase[req.params.shortURL])) {
+    res.redirect(`../404`);
+  }
+
   const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(302, `${longURL}`);
+  res.redirect(`${longURL}`);
 });
 
 app.get("/urls/:shortURL", (req,res) => {

@@ -37,19 +37,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.post("/urls/", (req, res) => {
-  // urlDatabase[req.body.longURL];
-  // console.log(req.body);  // Log the POST request body to the console
-  // console.log("req.body.longURL",req.body.longURL);
-  // console.log("Random String 1:", generateRandomString());
-  // console.log("Random String 2:", generateRandomString());
-  // console.log("Random String 3:", generateRandomString());
-  
-  console.log("urlDatabase", urlDatabase);
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  console.log("urlDatabase", urlDatabase);
   res.redirect(302, `/urls/${shortURL}`);
-  // res.send("Ok");
 });
 
 app.get("/hello", (req, res) => {

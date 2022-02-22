@@ -27,40 +27,29 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+// GET:BROWSE - SHOW ALL URLS
 app.get("/urls", (req,res) => {
   const templateVars = { urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 
+// GET:READ - PAGE/FORM TO CREATE NEW SHORT URL
 app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(302, `/urls/${shortURL}`);
-});
-
-app.get("/hello", (req, res) => {
-  const templateVars = { greeting: 'Hello World!'};
-  res.render("hello_world", templateVars);
-});
-
-app.get("/404", (req,res)=> {
-  res.render("404");
-});
-
+// GET:READ - PAGE TO VIEW SPECIFIC SHORT/LONG URL COMBO
 app.get("/urls/:shortURL", (req,res) => {
-
-  if (!(urlDatabase[req.params.shortURL])) {
-    res.redirect(`../404`);
-  }
-  
   const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars);
 });
 
+// GET:READ 404 ERROR PAGE
+app.get("/404", (req,res)=> {
+  res.render("404");
+});
+
+// GET:REDIRECT - VISIT ORIGINAL WWW LONG URL
 app.get("/u/:shortURL", (req,res) => {
 
   if (!(urlDatabase[req.params.shortURL])) {
@@ -71,22 +60,28 @@ app.get("/u/:shortURL", (req,res) => {
   res.redirect(`${longURL}`);
 });
 
-
-
-app.get("/urls/:shortURL", (req,res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
-  res.render("urls_show", templateVars);
+// POST:EDIT - LONG URL FOR EXISTING SHORT URL
+app.post("/urls/:shortURL", (req,res) => {
+  const shortURL = req.params.shortURL;
+  const newURL = req.body.newURL;
+  urlDatabase[shortURL] = newURL;
+  res.redirect(`/urls/${shortURL}`);
 });
 
-app.get("/urls/:shortURL/delete", (req,res) => {
+// POST:ADD - CREATE NEW SHORT URL
+app.post("/urls", (req, res) => {
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  res.redirect(302, `/urls/${shortURL}`);
+});
 
+// POST:DELETE - TINY/LONG COMBO FROM DATABASE
+app.post("/urls/:shortURL/delete", (req,res) => {
   if (!(urlDatabase[req.params.shortURL])) {
     res.redirect(`../404`);
   }
-
-  console.log("urlDatabase before:", urlDatabase);
-  delete urlDatabase[req.params.shortURL];
-  console.log("urlDatabase after:", urlDatabase);
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
 

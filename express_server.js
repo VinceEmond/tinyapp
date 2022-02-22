@@ -20,7 +20,7 @@ const generateRandomString = function() {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello Everyone!");
+  res.redirect(`../urls`);
 });
 
 app.get("/urls.json", (req, res) => {
@@ -36,7 +36,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new");
 });
 
-app.post("/urls/", (req, res) => {
+app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(302, `/urls/${shortURL}`);

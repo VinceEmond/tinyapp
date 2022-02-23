@@ -83,6 +83,16 @@ app.post("/urls/:shortURL/delete", (req,res) => {
   res.redirect(`/urls`);
 });
 
+// POST: LOGIN USER
+app.post("/login", (req,res) => {
+
+  // const username = res.cookie;
+  res.cookie("username",req.body.username);
+  console.log(`Set the cookie! to ${req.body.username}`);
+  // console.log("Username is", req.body.username);
+  //res.end("Made it!");
+  res.redirect("/urls");
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

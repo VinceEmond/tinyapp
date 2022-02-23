@@ -12,7 +12,6 @@
 
 <body style="background-color:rgb(0, 0, 0);">
   <main>
-    <h3></h3>
     <table class="table">
       <tbody>
         <section class="vh-100 bg-image" style="background-image: url('https://www.dayglo.com/media/1211/spectrum-553216_1280.png');">
@@ -24,7 +23,7 @@
                     <div class="card-body p-5">
                       <h2 class="text-uppercase text-center mb-5">Create an account</h2>
 
-                      <form>
+                      <form action="/register" method="POST">
                         <div class="form-outline mb-4">
                           <input name="email" type="email" id="form3Example3cg" class="form-control form-control-lg" />
                           <label class="form-label" for="form3Example3cg">Your Email</label>
@@ -35,11 +34,9 @@
                           <label class="form-label" for="form3Example4cg">Password</label>
                         </div>
 
-                        <p class="text-danger">
-                          <div class="d-flex justify-content-center">
-                            <button type="button" class="btn btn-success btn-block btn-lg gradient-custom-4">Register</button>
-                          </div>
-                        </p>
+                        <div class="d-flex justify-content-center">
+                          <button type="submit" class="btn btn-success btn-block btn-lg gradient-custom-4">Register</button>
+                        </div>
 
                         <p class="text-center text-muted mt-5 mb-0">Have already an account? <a href="login" class="fw-bold text-body"><u>Login here</u></a></p>
                       </form>

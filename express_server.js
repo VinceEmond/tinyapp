@@ -97,14 +97,12 @@ app.post("/urls/:shortURL/delete", (req,res) => {
 // POST: LOGIN USER
 app.post("/login", (req,res) => {
   res.cookie("username",req.body.username);
-  console.log(`Set the cookie! to ${req.body.username}`);
   res.redirect("/urls");
 });
 
 // POST: LOGOUT USER
 app.post("/logout", (req,res) => {
   res.clearCookie("username");
-  console.log(`Cleared the cookie: ${req.body.username}`);
   res.redirect("/urls");
 });
 

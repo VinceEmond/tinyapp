@@ -134,11 +134,18 @@ app.get("/u/:shortURL", (req,res) => {
 
 // GET: READ - REGISTRATION PAGE
 app.get("/register", (req,res) => {
-  const templateVars = {
-    username: req.cookies["username"],
-    urls: urlDatabase
-  };
+  const user = fetchUserInformation(users, req.cookies.user_id);
+  const templateVars = { user, urls: urlDatabase };
+
   res.render("register", templateVars);
+});
+
+// GET: READ - LOGIN PAGE
+app.get("/login", (req,res) => {
+  const user = fetchUserInformation(users, req.cookies.user_id);
+  const templateVars = { user, urls: urlDatabase };
+
+  res.render("login", templateVars);
 });
 
 // POST:EDIT - LONG URL FOR EXISTING SHORT URL

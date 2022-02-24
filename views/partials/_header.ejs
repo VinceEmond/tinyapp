@@ -12,10 +12,13 @@
     </div>
 
     <% if (!user.email){ %>
-      <form method="POST" action="/login">
-        <input type="text" name="username" placeholder="Username" style="width: 120px; margin: 1em">
-        <button type="submit" class="btn btn-outline-dark">Login</button>
+      <form method="GET" action="register">
+        <button class="btn btn-outline-light mr-2" type="submit">Register</button>
       </form>
+      <form method="GET" action="login">
+        <button class="btn btn-outline-light" type="submit">Login</button>
+      </form>
+      
     <%} else if (user.email) {%>
       <div>
         <form method="POST" action="/logout">

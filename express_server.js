@@ -31,12 +31,6 @@ const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
 
-
-app.get("/", (req, res) => {
-  res.redirect(`../urls`);
-});
-
-
 const fetchUserInformation = (users, userId) => {
   let userInfo = undefined;
 
@@ -52,6 +46,45 @@ const fetchUserInformation = (users, userId) => {
   }
   return userInfo;
 };
+
+const findByEmail = (users, email) => {
+  let foundUser = null;
+
+  Object.keys(users).forEach(function(key) {
+    if (users[key].email === email) {
+      foundUser = users[key];
+    }
+  });
+
+  return foundUser;
+};
+
+const createNewUser = (users, userInfo) => {
+  const {email, password} =  userInfo;
+  const userId = generateRandomString();
+
+  // Catch Incomplete form fields
+  if (!email || !password) {
+    return {error: "The form is incomplete. Please enter valid data for all required fields!", data: null};
+  }
+
+  // Catch if email already exists in users
+  if (findByEmail(users,email)) {
+    // Return 400 status code
+    return {error: `Email "${email}" is already registered to a user!`, data: null};
+  }
+
+  const newUser = {userId, email, password};
+  users[userId] = newUser;
+
+  console.log(`Completed user creation for ${email}`);
+  return {error: null, data: newUser};
+};
+
+// GET:READ - REDIRECT / TO URLS PAGE
+app.get("/", (req, res) => {
+  res.redirect(`../urls`);
+});
 
 // GET:BROWSE - SHOW ALL URLS
 app.get("/urls", (req,res) => {
@@ -99,16 +132,6 @@ app.get("/u/:shortURL", (req,res) => {
   res.redirect(`${longURL}`);
 });
 
-
-// // GET: READ - LOGIN PAGE
-// app.get("/login", (req,res) => {
-//   const templateVars = {
-//     username: req.cookies["username"],
-//     urls: urlDatabase
-//   };
-//   res.render("login", templateVars);
-// });
-
 // GET: READ - REGISTRATION PAGE
 app.get("/register", (req,res) => {
   const templateVars = {
@@ -116,16 +139,6 @@ app.get("/register", (req,res) => {
     urls: urlDatabase
   };
   res.render("register", templateVars);
-});
-
-// POST:ADD - CREATE NEW USER
-app.post("/register", (req,res) => {
-  const {email, password} = req.body;
-  const userId = generateRandomString();
-  users[userId] = {id: userId, email, password};
-  res.cookie("user_id", userId);
-  // console.log(`\n****** New User Registered! ******** \n UserId: ${userId}\n Email: ${email}\n Password: ${password}\n`);
-  res.redirect("/urls");
 });
 
 // POST:EDIT - LONG URL FOR EXISTING SHORT URL
@@ -136,6 +149,21 @@ app.post("/urls/:shortURL", (req,res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+// POST:ADD - CREATE NEW USER
+app.post("/register", (req,res) => {
+  const {error, data} = createNewUser(users, req.body);
+
+  if (error) {
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(400).send(error);
+  }
+
+  res.cookie("user_id", data.userId);
+  console.log(`\n****** New User Registered! ******** \n UserId: ${data.userId}\n Email: ${data.email}\n Password: ${data.password}\n`);
+  res.redirect("/urls");
+});
+
 // POST:ADD - CREATE NEW SHORT URL
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
@@ -143,7 +171,7 @@ app.post("/urls", (req, res) => {
   res.redirect(302, `/urls/${shortURL}`);
 });
 
-// POST:DELETE - TINY/LONG COMBO FROM DATABASE
+// POST:DELETE - DELETE TINY/LONG COMBO FROM DATABASE
 app.post("/urls/:shortURL/delete", (req,res) => {
   if (!(urlDatabase[req.params.shortURL])) {
     res.redirect(`../404`);
@@ -153,17 +181,17 @@ app.post("/urls/:shortURL/delete", (req,res) => {
   res.redirect(`/urls`);
 });
 
-// POST: LOGIN USER
-app.post("/login", (req,res) => {
-  res.cookie("username",req.body.username);
-  res.redirect("/urls");
-});
-
-// POST: LOGOUT USER
+// POST:DELETE - LOGOUT USER BY DELETING COOKIES
 app.post("/logout", (req,res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
+
+// POST: LOGIN USER
+// app.post("/login", (req,res) => {
+//   res.cookie("username",req.body.username);
+//   res.redirect("/urls");
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

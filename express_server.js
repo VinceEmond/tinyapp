@@ -32,7 +32,6 @@ const urlDatabase = {
   }
 };
 
-
 const users = {
   "userRandomID": {
     id: "userRandomID",
@@ -141,10 +140,29 @@ app.get("/", (req, res) => {
   res.redirect(`../urls`);
 });
 
+const urlsForUser = (id) => {
+  const userUrls = {};
+
+  for (const key in urlDatabase) {
+    if (urlDatabase[key].userID === id) {
+      userUrls[key] = urlDatabase[key];
+    }
+  }
+
+  return userUrls;
+};
+
 // GET:BROWSE - SHOW ALL URLS
 app.get("/urls", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
-  const templateVars = { user, urls: urlDatabase };
+  let userUrls = {};
+
+  // If user is logged-in fetch their personal URLs
+  if (user.id) {
+    userUrls = urlsForUser(user.id);
+  }
+
+  const templateVars = { user, urls: userUrls };
 
   res.render("urls_index", templateVars);
 });

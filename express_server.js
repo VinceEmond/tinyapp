@@ -135,11 +135,6 @@ const loginUser = (users, userInfo) => {
   return {error: null, data:databaseUser};
 };
 
-// GET:READ - REDIRECT / TO URLS PAGE
-app.get("/", (req, res) => {
-  res.redirect(`../urls`);
-});
-
 const urlsForUser = (id) => {
   const userUrls = {};
 
@@ -151,6 +146,11 @@ const urlsForUser = (id) => {
 
   return userUrls;
 };
+
+// GET:READ - REDIRECT / TO URLS PAGE
+app.get("/", (req, res) => {
+  res.redirect(`../urls`);
+});
 
 // GET:BROWSE - SHOW ALL URLS
 app.get("/urls", (req,res) => {
@@ -184,10 +184,40 @@ app.get("/urls/new", (req, res) => {
 // GET:READ - PAGE TO VIEW SPECIFIC SHORT/LONG URL COMBO
 app.get("/urls/:shortURL", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
+
+  // Catch if shortURL does not exist
+  if (!urlDatabase[req.params.shortURL]) {
+    let error = `This is an invalid tiny url!`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(404).send(error);
+  //return res.redirect("/login");
+  }
+
+  // Catch if user is not logged-in
+  if (!user.id) {
+    let error = `You are not logged-in! Redirecting to login page.`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+    //return res.redirect("/login");
+  }
+
+  // Catch if user does not match the creator of the URL
+  if (user.id !== urlDatabase[req.params.shortURL].userID) {
+    let error = `This tiny url does not belong to this account!`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+    //return res.redirect("/login");
+  }
+
   const templateVars = {
     user,
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL};
+    longURL: urlDatabase[req.params.shortURL].longURL
+  };
+
   res.render("urls_show", templateVars);
 });
 

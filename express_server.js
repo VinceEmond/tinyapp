@@ -268,8 +268,41 @@ app.get("/login", (req,res) => {
   res.render("login", templateVars);
 });
 
+
+
+
+
 // POST:EDIT - LONG URL FOR EXISTING SHORT URL
 app.post("/urls/:shortURL", (req,res) => {
+  const user = fetchUserInformation(users, req.cookies.user_id);
+ 
+  // Catch if user is not logged-in
+  if (!user.id) {
+    let error = `You are not logged-in! Redirecting to login page.`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+  //return res.redirect("/login");
+  }
+
+  // Catch if shortURL does not exist
+  if (!urlDatabase[req.params.shortURL]) {
+    let error = `This is an invalid tiny url!`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(404).send(error);
+    //return res.redirect("/login");
+  }
+
+  // Catch if user does not match the creator of the URL
+  if (user.id !== urlDatabase[req.params.shortURL].userID) {
+    let error = `This tiny url does not belong to this account!`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+  //return res.redirect("/login");
+  }
+
   const shortURL = req.params.shortURL;
   const newURL = req.body.newURL;
   urlDatabase[shortURL].longURL = newURL;
@@ -277,6 +310,11 @@ app.post("/urls/:shortURL", (req,res) => {
   console.log("urlDatabase", urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
+
+
+
+
+
 
 // POST:ADD - CREATE NEW SHORT URL
 app.post("/urls", (req, res) => {
@@ -335,15 +373,50 @@ app.post("/logout", (req,res) => {
   res.redirect("/urls");
 });
 
+
+
+
+
+
 // POST:DELETE - DELETE TINY/LONG COMBO FROM DATABASE
 app.post("/urls/:shortURL/delete", (req,res) => {
-  if (!(urlDatabase[req.params.shortURL])) {
-    res.redirect(`../404`);
+  const user = fetchUserInformation(users, req.cookies.user_id);
+
+  // Catch if user is not logged-in
+  if (!user.id) {
+    let error = `You are not logged-in! Redirecting to login page.`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+    //return res.redirect("/login");
   }
+
+  // Catch if shortURL does not exist
+  if (!urlDatabase[req.params.shortURL]) {
+    let error = `This is an invalid tiny url!`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(404).send(error);
+  //return res.redirect("/login");
+  }
+
+  // Catch if user does not match the creator of the URL
+  if (user.id !== urlDatabase[req.params.shortURL].userID) {
+    let error = `This tiny url does not belong to this account!`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+    //return res.redirect("/login");
+  }
+
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
+
+
+
+
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

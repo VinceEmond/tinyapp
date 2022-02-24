@@ -268,10 +268,6 @@ app.get("/login", (req,res) => {
   res.render("login", templateVars);
 });
 
-
-
-
-
 // POST:EDIT - LONG URL FOR EXISTING SHORT URL
 app.post("/urls/:shortURL", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
@@ -310,11 +306,6 @@ app.post("/urls/:shortURL", (req,res) => {
   console.log("urlDatabase", urlDatabase);
   res.redirect(`/urls/${shortURL}`);
 });
-
-
-
-
-
 
 // POST:ADD - CREATE NEW SHORT URL
 app.post("/urls", (req, res) => {
@@ -373,11 +364,6 @@ app.post("/logout", (req,res) => {
   res.redirect("/urls");
 });
 
-
-
-
-
-
 // POST:DELETE - DELETE TINY/LONG COMBO FROM DATABASE
 app.post("/urls/:shortURL/delete", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
@@ -413,10 +399,6 @@ app.post("/urls/:shortURL/delete", (req,res) => {
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
-
-
-
-
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

@@ -22,8 +22,8 @@
     <%} else if (user.email) {%>
       <div>
         <form method="POST" action="/logout">
-          <p class="card-text">Logged In As: <%= user.email %>!
-            <button type="submit" class="btn btn-outline-dark">Logout</button>
+          <p class="card-text mr-3">Logged In As: <%= user.email %>
+            <button type="submit" class="btn btn-outline-light mr-3">Logout</button>
           </p>
         </form>
       </div>

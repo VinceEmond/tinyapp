@@ -1,12 +1,15 @@
 const express = require("express");
+const morgan = require('morgan');
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
 
 app.set("view engine", "ejs");
+app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookieParser());
+app.use(morgan("dev"));
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -60,26 +63,63 @@ const findByEmail = (users, email) => {
 };
 
 const createNewUser = (users, userInfo) => {
-  const {email, password} =  userInfo;
-  const userId = generateRandomString();
-
-  // Catch Incomplete form fields
-  if (!email || !password) {
-    return {error: "The form is incomplete. Please enter valid data for all required fields!", data: null};
+  // Catch if form inputs are blank
+  const {error, data} = completedForm(userInfo);
+  if (error) {
+    return {error, data: null};
   }
 
-  // Catch if email already exists in users
-  if (findByEmail(users,email)) {
-    // Return 400 status code
-    return {error: `Email "${email}" is already registered to a user!`, data: null};
+  // Catch if email already exists in users database
+  if (findByEmail(users, data.email)) {
+    return {error: `Email "${data.email}" is already registered to a user!`, data: null};
   }
+  
+  // Create user and add to the database
+  const id = generateRandomString();
+  const newUser = {id, email: data.email, password: data.password};
+  users[id] = newUser;
 
-  const newUser = {userId, email, password};
-  users[userId] = newUser;
-
-  console.log(`Completed user creation for ${email}`);
+  // console.log(`Completed "createNewUser for email: ${data.email} with error: ${error}`);
   return {error: null, data: newUser};
 };
+
+const completedForm = (userInfo) => {
+  const {email, password} =  userInfo;
+  const formIncomplete = "The form is incomplete.";
+
+  // Catch if email or password is blank
+  if (!email) {
+    return {error: `${formIncomplete} Please enter your email!`, data: null};
+  } else if (!password) {
+    return {error: `${formIncomplete} Please enter your password!`, data: null};
+  }
+
+  return {error: null, data: {email, password}};
+};
+
+const loginUser = (users, userInfo) => {
+  // Catch if form inputs are blank
+  const {error, data} = completedForm(userInfo);
+  if (error) {
+    return {error, data: null};
+  }
+
+  // Catch if email does not exists in users database
+  if (!findByEmail(users, data.email)) {
+    return {error: `Email "${data.email}" does not exist in our database!`, data: null};
+  }
+
+  const formData = data;
+  const databaseUser = findByEmail(users, formData.email);
+
+  // Catch non-matching password
+  if (formData.password !== databaseUser.password) {
+    return {error: `Pasword is incorrect!`, data: null};
+  }
+
+  return {error: null, data:databaseUser};
+};
+
 
 // GET:READ - REDIRECT / TO URLS PAGE
 app.get("/", (req, res) => {
@@ -107,7 +147,6 @@ app.get("/urls/:shortURL", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
   const templateVars = {
     user,
-    username: req.cookies["username"],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]};
   res.render("urls_show", templateVars);
@@ -121,7 +160,7 @@ app.get("/404", (req,res)=> {
   res.render("404", templateVars);
 });
 
-// GET:REDIRECT - VISIT ORIGINAL WWW LONG URL
+// GET:REDIRECT - VISIT ORIGINAL WESBSITE OF LONG URL
 app.get("/u/:shortURL", (req,res) => {
 
   if (!(urlDatabase[req.params.shortURL])) {
@@ -166,8 +205,8 @@ app.post("/register", (req,res) => {
     return res.status(400).send(error);
   }
 
-  res.cookie("user_id", data.userId);
-  console.log(`\n****** New User Registered! ******** \n UserId: ${data.userId}\n Email: ${data.email}\n Password: ${data.password}\n`);
+  res.cookie("user_id", data.id);
+  console.log(`\n****** New User Registered! ******** \n UserId: ${data.id}\n Email: ${data.email}\n Password: ${data.password}\n`);
   res.redirect("/urls");
 });
 
@@ -176,6 +215,27 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect(302, `/urls/${shortURL}`);
+});
+
+// POST:LOGIN - LOGIN TO EXISTING USER
+app.post("/login", (req,res) => {
+  const {error, data} = loginUser(users, req.body);
+
+  if (error) {
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(403).send(error);
+  }
+
+  res.cookie("user_id", data.id);
+  console.log(`\n****** USER AUTHENTICATED AND LOGGED-IN! ******** \n UserId: ${data.id}\n Email: ${data.email}\n Password: ${data.password}\n`);
+  res.redirect("/urls");
+});
+
+// POST:LOGOUT - LOGOUT USER BY DELETING COOKIES
+app.post("/logout", (req,res) => {
+  res.clearCookie("user_id");
+  res.redirect("/urls");
 });
 
 // POST:DELETE - DELETE TINY/LONG COMBO FROM DATABASE
@@ -187,18 +247,6 @@ app.post("/urls/:shortURL/delete", (req,res) => {
   delete urlDatabase[shortURL];
   res.redirect(`/urls`);
 });
-
-// POST:DELETE - LOGOUT USER BY DELETING COOKIES
-app.post("/logout", (req,res) => {
-  res.clearCookie("user_id");
-  res.redirect("/urls");
-});
-
-// POST: LOGIN USER
-// app.post("/login", (req,res) => {
-//   res.cookie("username",req.body.username);
-//   res.redirect("/urls");
-// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);

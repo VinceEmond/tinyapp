@@ -1,5 +1,8 @@
+
+// REQUIRES
 const express = require("express");
 const morgan = require('morgan');
+const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
@@ -91,7 +94,8 @@ const createNewUser = (users, userInfo) => {
   
   // Create user and add to the database
   const id = generateRandomString();
-  const newUser = {id, email: data.email, password: data.password};
+  const hashedPassword = bcrypt.hashSync(data.password, 10);
+  const newUser = {id, email: data.email, password: hashedPassword};
   users[id] = newUser;
 
   // console.log(`Completed "createNewUser for email: ${data.email} with error: ${error}`);
@@ -128,7 +132,7 @@ const loginUser = (users, userInfo) => {
   const databaseUser = findByEmail(users, formData.email);
 
   // Catch non-matching password
-  if (formData.password !== databaseUser.password) {
+  if (!bcrypt.compareSync(formData.password, databaseUser.password)) {
     return {error: `Pasword is incorrect!`, data: null};
   }
 

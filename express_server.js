@@ -11,11 +11,27 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com",
+//   "r3rfwr": "http://stuff.com"
+// };
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-  "r3rfwr": "http://stuff.com"
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "userRandomID"
+  },
+  "9sm5xK": {
+    longURL:"http://www.google.com",
+    userID: "userRandomID"
+  },
+  "r3rfwr": {
+    longURL:"http://www.perdu.com",
+    userID: "userRandomID"
+  }
 };
+
 
 const users = {
   "userRandomID": {
@@ -120,7 +136,6 @@ const loginUser = (users, userInfo) => {
   return {error: null, data:databaseUser};
 };
 
-
 // GET:READ - REDIRECT / TO URLS PAGE
 app.get("/", (req, res) => {
   res.redirect(`../urls`);
@@ -139,6 +154,12 @@ app.get("/urls/new", (req, res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
   const templateVars = { user, urls: urlDatabase };
 
+  // Catch if user is not logged-in
+  if (!user.id) {
+    console.log(`You are not logged-in logged-in! Redirecting to login page.`);
+    return res.redirect("/login");
+  }
+
   res.render("urls_new", templateVars);
 });
 
@@ -148,7 +169,7 @@ app.get("/urls/:shortURL", (req,res) => {
   const templateVars = {
     user,
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]};
+    longURL: urlDatabase[req.params.shortURL].longURL};
   res.render("urls_show", templateVars);
 });
 
@@ -167,7 +188,7 @@ app.get("/u/:shortURL", (req,res) => {
     res.redirect(`../404`);
   }
 
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(`${longURL}`);
 });
 
@@ -175,6 +196,12 @@ app.get("/u/:shortURL", (req,res) => {
 app.get("/register", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
   const templateVars = { user, urls: urlDatabase };
+
+  // Catch if user is already logged-in
+  if (user.id) {
+    console.log(`User with email ${user.email} (user.id: ${user.id}) is already logged-in! Redirecting to /urls.`);
+    return res.redirect("/urls");
+  }
 
   res.render("register", templateVars);
 });
@@ -184,6 +211,12 @@ app.get("/login", (req,res) => {
   const user = fetchUserInformation(users, req.cookies.user_id);
   const templateVars = { user, urls: urlDatabase };
 
+  // Catch if user is already logged-in
+  if (user.id) {
+    console.log(`User with email ${user.email} (user.id: ${user.id}) is already logged-in! Redirecting to /urls.`);
+    return res.redirect("/urls");
+  }
+
   res.render("login", templateVars);
 });
 
@@ -191,14 +224,37 @@ app.get("/login", (req,res) => {
 app.post("/urls/:shortURL", (req,res) => {
   const shortURL = req.params.shortURL;
   const newURL = req.body.newURL;
-  urlDatabase[shortURL] = newURL;
+  urlDatabase[shortURL].longURL = newURL;
+  console.log(`Edited change the long URL to ${newURL} for shortURL ${shortURL} in the urlDataBase`);
+  console.log("urlDatabase", urlDatabase);
   res.redirect(`/urls/${shortURL}`);
+});
+
+// POST:ADD - CREATE NEW SHORT URL
+app.post("/urls", (req, res) => {
+  const user = fetchUserInformation(users, req.cookies.user_id);
+
+  // Catch if user is not logged-in
+  if (!user.id) {
+    let error = `You are not logged-in! Redirecting to login page.`;
+    console.log(error);
+    res.statusMessage = error;
+    return res.status(401).send(error);
+    //return res.redirect("/login");
+  }
+
+  console.log(`Yes you are logged-in! Processing post request.`);
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = {longURL : req.body.longURL, userID: user.id};
+
+  console.log("Added a new long/short combo to the urlDataBase");
+  console.log("urlDatabase", urlDatabase);
+  res.redirect(302, `/urls/${shortURL}`);
 });
 
 // POST:ADD - CREATE NEW USER
 app.post("/register", (req,res) => {
   const {error, data} = createNewUser(users, req.body);
-
   if (error) {
     console.log(error);
     res.statusMessage = error;
@@ -208,13 +264,6 @@ app.post("/register", (req,res) => {
   res.cookie("user_id", data.id);
   console.log(`\n****** New User Registered! ******** \n UserId: ${data.id}\n Email: ${data.email}\n Password: ${data.password}\n`);
   res.redirect("/urls");
-});
-
-// POST:ADD - CREATE NEW SHORT URL
-app.post("/urls", (req, res) => {
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = req.body.longURL;
-  res.redirect(302, `/urls/${shortURL}`);
 });
 
 // POST:LOGIN - LOGIN TO EXISTING USER

@@ -5,7 +5,7 @@ const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
 
-const getUserByEmail = (users, email) => {
+const getUserByEmail = (email, users) => {
   let foundUser = undefined;
 
   Object.keys(users).forEach(function(key) {
@@ -25,7 +25,7 @@ const createNewUser = (users, userInfo) => {
   }
 
   // Catch if email already exists in users database
-  if (getUserByEmail(users, data.email)) {
+  if (getUserByEmail(data.email, users)) {
     return {error: `Email "${data.email}" is already registered to a user!`, data: null};
   }
   
@@ -61,12 +61,12 @@ const loginUser = (users, userInfo) => {
   }
 
   // Catch if email does not exists in users database
-  if (!getUserByEmail(users, data.email)) {
+  if (!getUserByEmail(data.email, users)) {
     return {error: `Email "${data.email}" does not exist in our database!`, data: null};
   }
 
   const formData = data;
-  const databaseUser = getUserByEmail(users, formData.email);
+  const databaseUser = getUserByEmail(formData.email, users);
 
   // Catch non-matching password
   if (!bcrypt.compareSync(formData.password, databaseUser.password)) {

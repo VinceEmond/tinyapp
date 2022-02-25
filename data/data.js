@@ -1,5 +1,8 @@
+const users = {};
+const urlDatabase = {};
 
-const urlDatabase = {
+/*
+const urlDatabaseTest = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     userID: "userRandomID"
@@ -14,7 +17,7 @@ const urlDatabase = {
   }
 };
 
-const users = {
+const usersTest = {
   "userRandomID": {
     id: "userRandomID",
     email: "user@example.com",
@@ -26,6 +29,7 @@ const users = {
     password: "dishwasher-funk"
   }
 };
+ */
 
 module.exports = {
   urlDatabase,

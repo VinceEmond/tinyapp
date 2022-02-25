@@ -1,9 +1,19 @@
 const bcrypt = require('bcryptjs');
-const {urlDatabase} = require('../data/data');
+const {urlDatabase ,errorMessages} = require('../data/data');
+
 
 const generateRandomString = function() {
   return Math.random().toString(36).slice(2, 8);
 };
+
+
+const displayError = (errorCode, errorMsg,res) =>{
+  let error = `Error: ${errorMsg}`;
+  console.log(error);
+  res.statusMessage = error;
+  return res.status(errorCode).send(error);
+};
+
 
 const getUserByEmail = (email, users) => {
   let foundUser = undefined;
@@ -17,6 +27,7 @@ const getUserByEmail = (email, users) => {
   return foundUser;
 };
 
+
 const createNewUser = (users, userInfo) => {
   // Catch if form inputs are blank
   const {error, data} = completedForm(userInfo);
@@ -26,7 +37,7 @@ const createNewUser = (users, userInfo) => {
 
   // Catch if email already exists in users database
   if (getUserByEmail(data.email, users)) {
-    return {error: `Email "${data.email}" is already registered to a user!`, data: null};
+    return {error: errorMessages.alreadyRegistered, data: null};
   }
   
   // Create user and add to the database
@@ -39,19 +50,21 @@ const createNewUser = (users, userInfo) => {
   return {error: null, data: newUser};
 };
 
+
 const completedForm = (userInfo) => {
   const {email, password} =  userInfo;
 
   // Catch if email or password field is blank
   if (!email) {
-    return {error: `The form is incomplete: Please enter your email!`, data: null};
+    return {error: errorMessages.incompleteField.email, data: null};
   } else if (!password) {
-    return {error: `The form is incomplete: Please enter your password!`, data: null};
+    return {error: errorMessages.incompleteField.password, data: null};
   }
 
   // console.log(`All inputs for the form were filled`);
   return {error: null, data: {email, password}};
 };
+
 
 const loginUser = (users, userInfo) => {
   // Catch if form inputs are blank
@@ -62,19 +75,20 @@ const loginUser = (users, userInfo) => {
 
   // Catch if email does not exists in users database
   if (!getUserByEmail(data.email, users)) {
-    return {error: `Email "${data.email}" does not exist in our database!`, data: null};
+    return {error: errorMessages.notYetRegistered, data: null};
   }
-
+  
   const formData = data;
-  const databaseUser = getUserByEmail(formData.email, users);
+  const databaseData = getUserByEmail(formData.email, users);
 
   // Catch non-matching password
-  if (!bcrypt.compareSync(formData.password, databaseUser.password)) {
-    return {error: `Pasword is incorrect!`, data: null};
+  if (!bcrypt.compareSync(formData.password, databaseData.password)) {
+    return {error: errorMessages.incorrectPassword, data: null};
   }
 
-  return {error: null, data: databaseUser};
+  return {error: null, data: databaseData};
 };
+
 
 const urlsForUser = (id) => {
   const userUrls = {};
@@ -89,11 +103,13 @@ const urlsForUser = (id) => {
   return userUrls;
 };
 
+
 module.exports = {
   generateRandomString,
   getUserByEmail,
   createNewUser,
   completedForm,
   loginUser,
-  urlsForUser
+  urlsForUser,
+  displayError
 };

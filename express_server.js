@@ -3,15 +3,19 @@
 const express = require("express");
 const morgan = require('morgan');
 const bcrypt = require('bcryptjs');
+const cookieSession = require('cookie-session');
+
 const app = express();
 const PORT = 8080; // default port 8080
 const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
 app.use(morgan("dev"));
+app.use(cookieSession({
+  name: 'session',
+  keys: ['iLikEturt13z!'],
+}));
 
 
 // const urlDatabase = {
@@ -158,7 +162,7 @@ app.get("/", (req, res) => {
 
 // GET:BROWSE - SHOW ALL URLS
 app.get("/urls", (req,res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
   let userUrls = {};
 
   // If user is logged-in fetch their personal URLs
@@ -173,7 +177,7 @@ app.get("/urls", (req,res) => {
 
 // GET:READ - PAGE/FORM TO CREATE NEW SHORT URL
 app.get("/urls/new", (req, res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
   const templateVars = { user, urls: urlDatabase };
 
   // Catch if user is not logged-in
@@ -187,7 +191,7 @@ app.get("/urls/new", (req, res) => {
 
 // GET:READ - PAGE TO VIEW SPECIFIC SHORT/LONG URL COMBO
 app.get("/urls/:shortURL", (req,res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
 
   // Catch if shortURL does not exist
   if (!urlDatabase[req.params.shortURL]) {
@@ -227,7 +231,7 @@ app.get("/urls/:shortURL", (req,res) => {
 
 // GET:READ 404 ERROR PAGE
 app.get("/404", (req,res)=> {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
   const templateVars = { user, urls: urlDatabase };
 
   res.render("404", templateVars);
@@ -246,7 +250,7 @@ app.get("/u/:shortURL", (req,res) => {
 
 // GET: READ - REGISTRATION PAGE
 app.get("/register", (req,res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
   const templateVars = { user, urls: urlDatabase };
 
   // Catch if user is already logged-in
@@ -260,7 +264,7 @@ app.get("/register", (req,res) => {
 
 // GET: READ - LOGIN PAGE
 app.get("/login", (req,res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
   const templateVars = { user, urls: urlDatabase };
 
   // Catch if user is already logged-in
@@ -274,7 +278,7 @@ app.get("/login", (req,res) => {
 
 // POST:EDIT - LONG URL FOR EXISTING SHORT URL
 app.post("/urls/:shortURL", (req,res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
  
   // Catch if user is not logged-in
   if (!user.id) {
@@ -313,7 +317,7 @@ app.post("/urls/:shortURL", (req,res) => {
 
 // POST:ADD - CREATE NEW SHORT URL
 app.post("/urls", (req, res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
 
   // Catch if user is not logged-in
   if (!user.id) {
@@ -342,7 +346,7 @@ app.post("/register", (req,res) => {
     return res.status(400).send(error);
   }
 
-  res.cookie("user_id", data.id);
+  req.session.user_id = data.id;
   console.log(`\n****** New User Registered! ******** \n UserId: ${data.id}\n Email: ${data.email}\n Password: ${data.password}\n`);
   res.redirect("/urls");
 });
@@ -357,20 +361,20 @@ app.post("/login", (req,res) => {
     return res.status(403).send(error);
   }
 
-  res.cookie("user_id", data.id);
+  req.session.user_id = data.id;
   console.log(`\n****** USER AUTHENTICATED AND LOGGED-IN! ******** \n UserId: ${data.id}\n Email: ${data.email}\n Password: ${data.password}\n`);
   res.redirect("/urls");
 });
 
 // POST:LOGOUT - LOGOUT USER BY DELETING COOKIES
 app.post("/logout", (req,res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/urls");
 });
 
 // POST:DELETE - DELETE TINY/LONG COMBO FROM DATABASE
 app.post("/urls/:shortURL/delete", (req,res) => {
-  const user = fetchUserInformation(users, req.cookies.user_id);
+  const user = fetchUserInformation(users, req.session.user_id);
 
   // Catch if user is not logged-in
   if (!user.id) {

@@ -23,7 +23,14 @@ app.use(cookieSession({
 
 // GET:READ - REDIRECT / TO URLS PAGE
 app.get("/", (req, res) => {
-  res.redirect(`../urls`);
+  const user = users[req.session.user_id] ? users[req.session.user_id] : {};
+
+  //Catch if user is not logged-in
+  if (!user.id) {
+    res.redirect(`/login`);
+  }
+
+  res.redirect(`/urls`);
 });
 
 
@@ -50,7 +57,7 @@ app.get("/urls/new", (req, res) => {
 
   // Catch if user is not logged-in
   if (!user.id) {
-    console.log(`You are not logged-in logged-in! Redirecting to login page.`);
+    console.log(`Error: Not logged-in! Redirecting to login page.`);
     return res.redirect("/login");
   }
 
@@ -59,16 +66,16 @@ app.get("/urls/new", (req, res) => {
 
 
 // GET:READ - PAGE TO VIEW SPECIFIC SHORT/LONG URL COMBO
-app.get("/urls/:shortURL", (req,res) => {
+app.get("/urls/:id", (req,res) => {
   const user = users[req.session.user_id] ? users[req.session.user_id] : {};
 
-  // Catch if shortURL does not exist
-  if (!urlDatabase[req.params.shortURL]) {
+  // Catch if URL id does not exist
+  if (!urlDatabase[req.params.id]) {
     let error = `Error: Invalid tiny url!`;
     console.log(error);
     res.statusMessage = error;
     return res.status(404).send(error);
-  //return res.redirect("/login");
+    //return res.redirect("/login");
   }
 
   // Catch if user is not logged-in
@@ -81,7 +88,7 @@ app.get("/urls/:shortURL", (req,res) => {
   }
 
   // Catch if user does not match the creator of the URL
-  if (user.id !== urlDatabase[req.params.shortURL].userID) {
+  if (user.id !== urlDatabase[req.params.id].userID) {
     let error = `This tiny url does not belong to this account!`;
     console.log(error);
     res.statusMessage = error;
@@ -91,8 +98,8 @@ app.get("/urls/:shortURL", (req,res) => {
 
   const templateVars = {
     user,
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL
   };
 
   return res.render("urls_show", templateVars);
@@ -109,18 +116,18 @@ app.get("/404", (req,res)=> {
 
 
 // GET:REDIRECT - VISIT ORIGINAL WESBSITE OF LONG URL
-app.get("/u/:shortURL", (req,res) => {
+app.get("/u/:id", (req,res) => {
 
-  // Catch if shortURL does not exist
-  if (!urlDatabase[req.params.shortURL]) {
+  // Catch if URL id does not exist
+  if (!urlDatabase[req.params.id]) {
     let error = `Error: Invalid tiny url!`;
     console.log(error);
     res.statusMessage = error;
     return res.status(404).send(error);
-  //return res.redirect("/login");
+    //return res.redirect("/login");
   }
 
-  const longURL = urlDatabase[req.params.shortURL].longURL;
+  const longURL = urlDatabase[req.params.id].longURL;
   return res.redirect(`${longURL}`);
 });
 
@@ -158,9 +165,9 @@ app.get("/login", (req,res) => {
 
 
 // POST:EDIT - MODIFY LONG URL FOR EXISTING SHORT URL
-app.post("/urls/:shortURL", (req,res) => {
+app.post("/urls/:id", (req,res) => {
   const user = users[req.session.user_id] ? users[req.session.user_id] : {};
-  const shortURL = req.params.shortURL;
+  const id = req.params.id;
   const newURL = req.body.newURL;
 
   // Catch if user is not logged-in
@@ -172,8 +179,8 @@ app.post("/urls/:shortURL", (req,res) => {
   //return res.redirect("/login");
   }
 
-  // Catch if shortURL does not exist
-  if (!urlDatabase[req.params.shortURL]) {
+  // Catch if URL id does not exist
+  if (!urlDatabase[req.params.id]) {
     let error = `This is an invalid tiny url!`;
     console.log(error);
     res.statusMessage = error;
@@ -182,7 +189,7 @@ app.post("/urls/:shortURL", (req,res) => {
   }
 
   // Catch if current user does not match the creator of URL
-  if (user.id !== urlDatabase[shortURL].userID) {
+  if (user.id !== urlDatabase[id].userID) {
     let error = `You do not have permission to edit this tinyurl!`;
     console.log(error);
     res.statusMessage = error;
@@ -190,10 +197,10 @@ app.post("/urls/:shortURL", (req,res) => {
     //return res.redirect("/login");
   }
   
-  urlDatabase[shortURL].longURL = newURL;
-  // console.log(`Edited urlDatabase: Updated shortURL ${shortURL}'s long URL to ${newURL}`);
+  urlDatabase[id].longURL = newURL;
+  // console.log(`Edited urlDatabase: Updated id ${id}'s long URL to ${newURL}`);
   // console.log("urlDatabase", urlDatabase);
-  return res.redirect(`/urls/${shortURL}`);
+  return res.redirect(`/urls/${id}`);
 });
 
 
@@ -210,11 +217,11 @@ app.post("/urls", (req, res) => {
     //return res.redirect("/login");
   }
 
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = {longURL : req.body.longURL, userID: user.id};
+  const id = generateRandomString();
+  urlDatabase[id] = {longURL : req.body.longURL, userID: user.id};
   // console.log("Added a new long/short combo to the urlDataBase");
   // console.log("urlDatabase", urlDatabase);
-  return res.redirect(`/urls/${shortURL}`);
+  return res.redirect(`/urls/${id}`);
 });
 
 
@@ -241,7 +248,7 @@ app.post("/login", (req,res) => {
   if (error) {
     console.log(error);
     res.statusMessage = error;
-    return res.status(403).send(error);
+    return res.status(404).send(error);
   }
 
   req.session["user_id"] = data.id;
@@ -258,9 +265,9 @@ app.post("/logout", (req,res) => {
 
 
 // POST:DELETE - DELETE TINY/LONG COMBO FROM DATABASE
-app.post("/urls/:shortURL/delete", (req,res) => {
+app.post("/urls/:id/delete", (req,res) => {
   const user = users[req.session.user_id] ? users[req.session.user_id] : {};
-  const shortURL = req.params.shortURL;
+  const id = req.params.id;
 
   // Catch if user is not logged-in
   if (!user.id) {
@@ -271,17 +278,17 @@ app.post("/urls/:shortURL/delete", (req,res) => {
     //return res.redirect("/login");
   }
 
-  // Catch if shortURL does not exist
-  if (!urlDatabase[shortURL]) {
+  // Catch if URL id does not exist
+  if (!urlDatabase[id]) {
     let error = `This is an invalid tiny url!`;
     console.log(error);
     res.statusMessage = error;
     return res.status(404).send(error);
-  //return res.redirect("/login");
+    //return res.redirect("/login");
   }
 
   // Catch if current user does not match the creator of URL
-  if (user.id !== urlDatabase[shortURL].userID) {
+  if (user.id !== urlDatabase[id].userID) {
     let error = `This tiny url does not belong to this account!`;
     console.log(error);
     res.statusMessage = error;
@@ -289,7 +296,7 @@ app.post("/urls/:shortURL/delete", (req,res) => {
     //return res.redirect("/login");
   }
 
-  delete urlDatabase[shortURL];
+  delete urlDatabase[id];
   return res.redirect(`/urls`);
 });
 

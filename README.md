@@ -15,7 +15,13 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 ## Screenshots
 
-![image](./docs/images)
+!["Screenshot of registration page"](https://github.com/VinceEmond/tinyapp/blob/main/docs/images/register-page.png?raw=true)
+
+!["Screenshot of new URL page"](https://github.com/VinceEmond/tinyapp/blob/main/docs/images/url-new-page.png?raw=true)
+
+!["Screenshot of URL Index page"](https://github.com/VinceEmond/tinyapp/blob/main/docs/images/urls-index-page.png?raw=true)
+
+!["Screenshot of URL show page"](https://github.com/VinceEmond/tinyapp/blob/main/docs/images/url-show-page.png?raw=true)
 
 # Getting Started
 

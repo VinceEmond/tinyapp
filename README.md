@@ -45,7 +45,7 @@ npm install
 ### Run Development Server
 
 ```sh
-npm start
+node express_server.js
 ```
 
 Server should be hosted at `http://localhost:8080/`
